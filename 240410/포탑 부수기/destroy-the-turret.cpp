@@ -12,13 +12,12 @@ int map[11][11];
 int dr[8] = { 0, 1, 0, -1, -1, -1, 1, 1 };
 int dc[8] = { 1, 0, -1, 0, 1, -1, 1, -1 };
 
-typedef pair<int, int> myPair;
-myPair initpair = { -1, -1 };
-myPair path[11][11] = { initpair, };
+pair<int, int> initpair = { -1, -1 };
+pair<int, int> path[11][11] = { initpair, };
 int use[11][11] = { 0, };
 int max_val = 0;
 typedef struct node {
-	myPair loc;
+	pair<int, int> loc;
 	int power;
 	bool is_destroyed;
 	int cnt;
@@ -63,7 +62,10 @@ void init() {
 				tmp = { {i, j}, 0, true, 0 };
 			}
 			else {
-				tmp = { {i, j}, map[i][j], false, 0 };
+				if(str.loc.first == i && str.loc.second == j)
+					tmp = { {i, j}, map[i][j], false, 0 };
+				else
+					tmp = { {i, j}, map[i][j], false, 1 };
 				pq.push(tmp);
 			}
 		}
@@ -86,15 +88,15 @@ void init() {
 
 bool dijkstra() {
 	// filter 2. 최단 거리 경로 저장 
-	priority_queue<pair<int, myPair>, vector<pair<int, myPair>>, greater<pair<int, myPair>>> pq2;
-	vector<vector<int>> dist(n + 1, vector<int>(m + 1, INT_MAX)); // 최단 거리를 저장할 배열
-	vector<vector<myPair>> prev(n + 1, vector<myPair>(m + 1, { -1, -1 }));
+	priority_queue<pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> pq2;
+	vector<vector<int>> dist(n + 1, vector<int>(m + 1, 1e9)); // 최단 거리를 저장할 배열
+	vector<vector<pair<int, int>>> prev(n+1, vector<pair<int, int>>(m+1, initpair));
 	dist[str.loc.first][str.loc.second] = 0; // 시작 위치의 거리는 0
 	pq2.push({ 0, str.loc }); // 시작 위치를 우선순위 큐에 넣음
 
 	while (!pq2.empty()) {
 		int current_dist = pq2.top().first;
-		myPair current_loc = pq2.top().second;
+		pair<int, int> current_loc = pq2.top().second;
 		pq2.pop();
 
 		// 이미 처리된 노드는 무시
@@ -102,7 +104,7 @@ bool dijkstra() {
 
 		// 인접한 노드를 확인
 		for (int i = 0; i < 4; i++) {
-			myPair next_loc = { current_loc.first + dr[i] , current_loc.second + dc[i] };
+			pair<int, int> next_loc = { current_loc.first + dr[i] , current_loc.second + dc[i] };
 
 			// 벽을 만나면 반대편으로 나옴
 			if (next_loc.first < 1)
@@ -131,8 +133,8 @@ bool dijkstra() {
 	}
 
 	// 목표 위치까지 도달 가능하면 true, 아니면 false 반환
-	if (dist[stp.loc.first][stp.loc.second] != INT_MAX) {
-		myPair current_loc = stp.loc;
+	if (dist[stp.loc.first][stp.loc.second] != 1e9) {
+		pair<int, int> current_loc = stp.loc;
 		map[current_loc.first][current_loc.second] -= (str.power / 2 + str.power % 2);
 		while (current_loc != str.loc) {
 			map[current_loc.first][current_loc.second] -= str.power / 2;
@@ -168,16 +170,21 @@ void updateMap() {
 bool attackLazer() {
 	// 공격 전 map 저장
 	int tmp[11][11];
-	memmove(tmp, map, sizeof(map));
-
-	// 레이저 공격 시작
-	bool isPossible = dijkstra();
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < m; j++) {
+			tmp[i][j] = map[i][j];
+		}
+	}
 
 	// 레이저 공격 불가 시 : map을 복구하고 return false
-	if (isPossible == false) {
+	if (dijkstra() == false) {
 
-		memmove(use, 0, sizeof(use));
-		memmove(map, tmp, sizeof(map));
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < m; j++) {
+				map[i][j] = tmp[i][j];
+				use[i][j] = 0;
+			}
+		}
 
 		return false;
 	}
@@ -186,7 +193,7 @@ bool attackLazer() {
 }
 
 void attackBomb() {
-	myPair now = stp.loc;
+	pair<int, int> now = stp.loc;
 
 	map[now.first][now.second] -= str.power;
 	use[now.first][now.second] = 1;
@@ -194,7 +201,7 @@ void attackBomb() {
 
 
 	for (int i = 0; i < 8; i++) {
-		myPair next = { now.first + dr[i] , now.second + dc[i] };
+		pair<int, int> next = { now.first + dr[i] , now.second + dc[i] };
 
 		// #. 벽인가? 반대편 위치로 업데이트
 		if (next.first < 1)
@@ -267,7 +274,7 @@ void solution() {
 int main(int argc, char** argv)
 {
 
-	//freopen("sample_input.txt", "r", stdin);
+	// freopen("sample_input.txt", "r", stdin);
 	input();
 	init();
 	solution();
