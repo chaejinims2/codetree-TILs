@@ -266,17 +266,20 @@ void solution() {
 
 int main(int argc, char** argv)
 {
-	int test_case;
-	int T = 1;
+	// int test_case;
+	// int T = 1;
 
-	//freopen("sample_input.txt", "r", stdin);
-	//cin >> T;
+	// //freopen("sample_input.txt", "r", stdin);
+	// //cin >> T;
 
-	for (test_case = 1; test_case <= T; ++test_case)
-	{
-		input();
-		init();
-		solution();
-	}
+	// for (test_case = 1; test_case <= T; ++test_case)
+	// {
+	// 	input();
+	// 	init();
+	// 	solution();
+	// }
+    input();
+    init();
+    solution();
 	return 0;
 }
