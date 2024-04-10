@@ -133,9 +133,9 @@ bool dijkstra() {
 	// 목표 위치까지 도달 가능하면 true, 아니면 false 반환
 	if (dist[stp.loc.first][stp.loc.second] != INT_MAX) {
 		myPair current_loc = stp.loc;
-		map[current_loc.first][current_loc.second] -= (str.power / 2 + str.power%2);
+		map[current_loc.first][current_loc.second] -= (str.power / 2 + str.power % 2);
 		while (current_loc != str.loc) {
-			map[current_loc.first][current_loc.second] -= str.power/2;
+			map[current_loc.first][current_loc.second] -= str.power / 2;
 			use[current_loc.first][current_loc.second] = 1;
 			current_loc = prev[current_loc.first][current_loc.second];
 		}
@@ -260,26 +260,17 @@ void solution() {
 
 	}
 
-	cout << max_val << endl;
-	
+	cout << max_val;
+
 }
 
 int main(int argc, char** argv)
 {
-	// int test_case;
-	// int T = 1;
 
-	// //freopen("sample_input.txt", "r", stdin);
-	// //cin >> T;
+	//freopen("sample_input.txt", "r", stdin);
+	input();
+	init();
+	solution();
 
-	// for (test_case = 1; test_case <= T; ++test_case)
-	// {
-	// 	input();
-	// 	init();
-	// 	solution();
-	// }
-    input();
-    init();
-    solution();
 	return 0;
 }
