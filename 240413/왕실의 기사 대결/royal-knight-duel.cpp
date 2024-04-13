@@ -32,8 +32,8 @@ const int dc[4] = {0, 1, 0, -1};
 
 bool is_Wall(int r, int c) {
 	if (r < 0 || c < 0 || r >= n || c >= n)
-		return false;
-	return true;
+		return true;
+	return false;
 }
 
 // dir = 0, loc[vv[idx].r] 전부
@@ -52,7 +52,7 @@ bool isValid(int idx, int dir) {
 
 	for (int i = 0; i < vv[idx].h; i++) {
 		for (int j = 0; j < vv[idx].w; j++) {
-			if (!is_Wall(vv[idx].r + i, vv[idx].c + j))
+			if (is_Wall(vv[idx].r + i, vv[idx].c + j))
 				continue;
 			switch (dir) {
 			case 0:
@@ -84,9 +84,9 @@ bool isValid(int idx, int dir) {
 		// now와 연결되는 기사들은 다 연결
 		chk[now.first][now.second] = 1;
 		pair<int, int> next = { now.first + dr[dir], now.second + dc[dir] };
-
-		// next 좌표에 기사가 있는가?
-		if (use[next.first][next.second] != -1)  {
+		
+		// 해당 방향이 밖이 아니고 기사가 있는가?
+		if (!is_Wall(next.first, next.second) && use[next.first][next.second] != -1)  {
 			
 			int next_idx = use[next.first][next.second];
 
@@ -94,7 +94,7 @@ bool isValid(int idx, int dir) {
 
 			for (int i = 0; i < vv[next_idx].h; i++) {
 				for (int j = 0; j < vv[next_idx].w; j++) {
-					if (!is_Wall(vv[next_idx].r + i, vv[next_idx].c + j))
+					if (is_Wall(vv[next_idx].r + i, vv[next_idx].c + j))
 						continue;
 					if (chk[vv[next_idx].r + i][vv[next_idx].c + j] == 0) {
 
@@ -156,7 +156,7 @@ bool shiftKnight(int idx, int dir) {
 		// 명령의 당사자 이동
 
 
-		if (!is_Wall(vv[idx].r + dr[dir], vv[idx].c + dc[dir]))
+		if (is_Wall(vv[idx].r + dr[dir], vv[idx].c + dc[dir]))
 			return false;
 
 		vv[idx].r += dr[dir];
