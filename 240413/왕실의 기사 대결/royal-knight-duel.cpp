@@ -31,7 +31,7 @@ const int dr[4] = {-1, 0, 1, 0};
 const int dc[4] = {0, 1, 0, -1};
 
 bool is_Wall(int r, int c) {
-	if (r < 0 || c < 0 || r >= n || c >= n)
+	if (r < 0 || c < 0 || r >= l || c >= l)
 		return true;
 	return false;
 }
@@ -85,46 +85,56 @@ bool isValid(int idx, int dir) {
 		chk[now.first][now.second] = 1;
 		pair<int, int> next = { now.first + dr[dir], now.second + dc[dir] };
 		
-		// 해당 방향이 밖이 아니고 기사가 있는가?
-		if (!is_Wall(next.first, next.second) && use[next.first][next.second] != -1)  {
+		// 해당 방향이 밖이 아니고
+		if (!is_Wall(next.first, next.second)) {
+
+			// 해당 방향이 기사가 있는가?
+			if (use[next.first][next.second] != -1)  {
 			
-			int next_idx = use[next.first][next.second];
+				int next_idx = use[next.first][next.second];
 
-			candidate.push(next_idx);
+				candidate.push(next_idx);
 
-			for (int i = 0; i < vv[next_idx].h; i++) {
-				for (int j = 0; j < vv[next_idx].w; j++) {
-					if (is_Wall(vv[next_idx].r + i, vv[next_idx].c + j))
-						continue;
-					if (chk[vv[next_idx].r + i][vv[next_idx].c + j] == 0) {
+				for (int i = 0; i < vv[next_idx].h; i++) {
+					for (int j = 0; j < vv[next_idx].w; j++) {
+						if (is_Wall(vv[next_idx].r + i, vv[next_idx].c + j))
+							continue;
+						if (chk[vv[next_idx].r + i][vv[next_idx].c + j] == 0) {
 
-						switch (dir) {
-						case 0:
-							if (i == 0)
-								qp.push({ vv[next_idx].r + i, vv[next_idx].c + j });
-							break;
-						case 2:
-							if (i == vv[next_idx].h - 1)
-								qp.push({ vv[next_idx].r + i, vv[next_idx].c + j });
-							break;
-						case 1:
-							if (j == vv[next_idx].w - 1)
-								qp.push({ vv[next_idx].r + i, vv[next_idx].c + j });
-							break;
-						case 3:
-							if (j == 0)
-								qp.push({ vv[next_idx].r + i, vv[next_idx].c + j });
-							break;
+							switch (dir) {
+							case 0:
+								if (i == 0)
+									qp.push({ vv[next_idx].r + i, vv[next_idx].c + j });
+								break;
+							case 2:
+								if (i == vv[next_idx].h - 1)
+									qp.push({ vv[next_idx].r + i, vv[next_idx].c + j });
+								break;
+							case 1:
+								if (j == vv[next_idx].w - 1)
+									qp.push({ vv[next_idx].r + i, vv[next_idx].c + j });
+								break;
+							case 3:
+								if (j == 0)
+									qp.push({ vv[next_idx].r + i, vv[next_idx].c + j });
+								break;
 
 
+							}
+							chk[vv[next_idx].r + i][vv[next_idx].c + j] = 1;
 						}
-						chk[vv[next_idx].r + i][vv[next_idx].c + j] = 1;
-					}
 
-					loc[vv[idx].r + i].push_back(vv[idx].c + j);
+						loc[vv[idx].r + i].push_back(vv[idx].c + j);
+					}
 				}
+				continue;
 			}
-			continue;
+
+
+			// 해당 방향이 아무것도 없는가?
+			if (map[next.first][next.second] != 2 && candidate.empty())
+				return true;
+
 		}
 		
 		// next 좌표가 벽인가? : 이동 불가 
@@ -156,11 +166,11 @@ bool shiftKnight(int idx, int dir) {
 		// 명령의 당사자 이동
 
 
-		if (is_Wall(vv[idx].r + dr[dir], vv[idx].c + dc[dir]))
-			return false;
-
-		vv[idx].r += dr[dir];
-		vv[idx].c += dc[dir];
+		//if (is_Wall(vv[idx].r + dr[dir], vv[idx].c + dc[dir]))
+		//	return false;
+		candidate.push(idx);
+		//vv[idx].r += dr[dir];
+		//vv[idx].c += dc[dir];
 
 
 		return true;
@@ -170,24 +180,37 @@ bool shiftKnight(int idx, int dir) {
 
 }
 
-void updateDamage(int dir) {
+void updateDamage(int idx, int dir) {
 
+	//memset(use, -1, sizeof(use));
+	//for (int i = 0; i < vv[idx].h; i++) {
+	//	for (int j = 0; j < vv[idx].w; j++) {
+	//		use[vv[idx].r + i][vv[idx].c + j] = idx;
+	//	}
+	//}
 	// 기사 기준 해당 방향의 모든 영역 이동 및 데미지 업데이트
 	// 이때 명령의 당사자는 큐에 넣지 않는다.
 	while (!candidate.empty()) {
 		int now = candidate.front();
 		candidate.pop();
 		// 영역 이동
-		vv[now].r += dr[dir];
-		vv[now].c += dc[dir];
+		int tmp_r = vv[now].r + dr[dir];
+		int tmp_c = vv[now].c + dc[dir];
+
 		for (int i = 0; i < vv[now].h; i++) {
 			for (int j = 0; j < vv[now].w; j++) {
-				use[i][j] = now;
-				if (map[vv[now].r + i][vv[now].c + j] == 1)
-					// 데미지 업데이트
+				if (map[tmp_r + i][tmp_c + j] == 1 && now != idx)
 					vv[now].k -= 1;
+				if (vv[now].k <= 0) 
+					continue;
+				use[vv[now].r + i][vv[now].c + j] = -1;
+				use[tmp_r + i][tmp_c + j] = now;
+
 			}
 		}
+
+		vv[now].r = tmp_r;
+		vv[now].c = tmp_c;
 
 	}
 
@@ -210,9 +233,8 @@ void solution() {
 
 		// 2. 만약 이동했다면 데미지 업데이트
 		if (is_shift) {
-			updateDamage(dir);
+			updateDamage(idx, dir);
 			// chk, use 초기화
-			memset(use, -1, sizeof(use));
 		}
 
 	}
