@@ -1,242 +1,87 @@
 #define _CRT_SECURE_NO_WARNINGS
-#define MAX_L 41
-#define MAX_N 31
-#define MAX_Q 100
-#define MAX_K 100
-
 #include <iostream>
-#include <vector>
 #include <queue>
-#include <tuple>
-#include <cstring>
 
 using namespace std;
 
-
-struct knight {
-	int r, c, h, w, k;
-};
+#define MAX_N 31
+#define MAX_L 41
 
 int l, n, q;
-int map[MAX_L][MAX_L];
-int chk[MAX_L][MAX_L];			// 방문 여부 검사
-int use[MAX_L][MAX_L]; // 기사 존재 여부 검사
-vector<knight> vv(MAX_N);
-vector<int> kk(MAX_N);
+int info[MAX_L][MAX_L];
+int bef_k[MAX_N];
+int r[MAX_N], c[MAX_N], h[MAX_N], w[MAX_N], k[MAX_N];
+int nr[MAX_N], nc[MAX_N];
+int dmg[MAX_N];
+bool is_moved[MAX_N];
 
-vector<pair<int, int>> qq(MAX_Q);
+int dx[4] = { -1, 0, 1, 0 }, dy[4] = { 0, 1, 0, -1 };
 
-queue<int> candidate;
-const int dr[4] = {-1, 0, 1, 0};
-const int dc[4] = {0, 1, 0, -1};
+// 움직임을 시도해봅니다.
+bool TryMovement(int idx, int dir) {
+	// 초기화 작업입니다.
+	for (int i = 1; i <= n; i++) {
+		dmg[i] = 0;
+		is_moved[i] = false;
+		nr[i] = r[i];
+		nc[i] = c[i];
+	}
 
-bool is_Wall(int r, int c) {
-	if (r < 0 || c < 0 || r >= l || c >= l)
-		return true;
-	return false;
-}
+	queue<int> q;
 
-// dir = 0, loc[vv[idx].r] 전부
-// dir = 1, loc[vv[idx].r].back() ~ loc[vv[idx].r + vv[idx].w].back()
-// dir = 2, loc[vv[idx].r + vv[idx].w] 전부
-// dir = 3, loc[vv[idx].r].front() ~ loc[vv[idx].r + vv[idx].w].front()
-bool isValid(int idx, int dir) {
+	q.push(idx);
+	is_moved[idx] = true;
 
+	while (!q.empty()) {
+		int x = q.front(); q.pop();
 
-	// @ 2. 해당 방향으로 이동 가능한지
+		nr[x] += dx[dir];
+		nc[x] += dy[dir];
 
+		// 경계를 벗어나는지 체크합니다.
+		if (nr[x] < 1 || nc[x] < 1 || nr[x] + h[x] - 1 > l || nc[x] + w[x] - 1 > l)
+			return false;
 
-	// #. 기사가 차지한 영역 좌표 저장
-	vector<vector<int>> loc(l);
-	queue<pair<int, int>> qp;
-
-	for (int i = 0; i < vv[idx].h; i++) {
-		for (int j = 0; j < vv[idx].w; j++) {
-			if (is_Wall(vv[idx].r + i, vv[idx].c + j))
-				continue;
-			switch (dir) {
-			case 0:
-				if (i == 0)
-					qp.push({ vv[idx].r + i, vv[idx].c + j });
-				break;
-			case 2:
-				if (i == vv[idx].h - 1)
-					qp.push({ vv[idx].r + i, vv[idx].c + j });
-				break;
-			case 1:
-				if (j == vv[idx].w - 1)
-					qp.push({ vv[idx].r + i, vv[idx].c + j });
-				break;
-			case 3:
-				if (j == 0)
-					qp.push({ vv[idx].r + i, vv[idx].c + j });
-				break;
+		// 대상 조각이 다른 조각이나 장애물과 충돌하는지 검사합니다.
+		for (int i = nr[x]; i <= nr[x] + h[x] - 1; i++) {
+			for (int j = nc[x]; j <= nc[x] + w[x] - 1; j++) {
+				if (info[i][j] == 1)
+					dmg[x]++;
+				if (info[i][j] == 2)
+					return false;
 			}
+		}
 
-			loc[vv[idx].r + i].push_back(vv[idx].c + j);
+		// 다른 조각과 충돌하는 경우, 해당 조각도 같이 이동합니다.
+		for (int i = 1; i <= n; i++) {
+			if (is_moved[i] || k[i] <= 0)
+				continue;
+			if (r[i] > nr[x] + h[x] - 1 || nr[x] > r[i] + h[i] - 1)
+				continue;
+			if (c[i] > nc[x] + w[x] - 1 || nc[x] > c[i] + w[i] - 1)
+				continue;
+
+			is_moved[i] = true;
+			q.push(i);
 		}
 	}
 
-
-	// # 해당 방향에 벽/밖 이 있다면 불가
-	while (!qp.empty()) {
-		pair<int, int> now = qp.front(); qp.pop();
-		// now와 연결되는 기사들은 다 연결
-		chk[now.first][now.second] = 1;
-		pair<int, int> next = { now.first + dr[dir], now.second + dc[dir] };
-		
-		// 해당 방향이 밖이 아니고
-		if (!is_Wall(next.first, next.second)) {
-
-			// 해당 방향이 기사가 있는가?
-			if (use[next.first][next.second] != -1)  {
-			
-				int next_idx = use[next.first][next.second];
-
-				candidate.push(next_idx);
-
-				for (int i = 0; i < vv[next_idx].h; i++) {
-					for (int j = 0; j < vv[next_idx].w; j++) {
-						if (is_Wall(vv[next_idx].r + i, vv[next_idx].c + j))
-							continue;
-						if (chk[vv[next_idx].r + i][vv[next_idx].c + j] == 0) {
-
-							switch (dir) {
-							case 0:
-								if (i == 0)
-									qp.push({ vv[next_idx].r + i, vv[next_idx].c + j });
-								break;
-							case 2:
-								if (i == vv[next_idx].h - 1)
-									qp.push({ vv[next_idx].r + i, vv[next_idx].c + j });
-								break;
-							case 1:
-								if (j == vv[next_idx].w - 1)
-									qp.push({ vv[next_idx].r + i, vv[next_idx].c + j });
-								break;
-							case 3:
-								if (j == 0)
-									qp.push({ vv[next_idx].r + i, vv[next_idx].c + j });
-								break;
-
-
-							}
-							chk[vv[next_idx].r + i][vv[next_idx].c + j] = 1;
-						}
-
-						loc[vv[idx].r + i].push_back(vv[idx].c + j);
-					}
-				}
-				continue;
-			}
-
-
-			// 해당 방향이 아무것도 없는가?
-			if (map[next.first][next.second] != 2 && candidate.empty())
-				return true;
-
-		}
-		
-		// next 좌표가 벽인가? : 이동 불가 
-		if (map[next.first][next.second] == 2) {
-			while (!candidate.empty()) candidate.pop();
-			
-			break;
-		}
-		
-
-	}
-
-	if (candidate.empty()) 
-		return false;
+	dmg[idx] = 0;
 	return true;
 }
 
+// 특정 조각을 지정된 방향으로 이동시키는 함수입니다.
+void MovePiece(int idx, int dir) {
+	if (k[idx] <= 0)
+		return;
 
-// idx번 기사에게 dir방향으로 가라고 명령
-bool shiftKnight(int idx, int dir) {
-
-	// 1. 기사가 존재하는지 확인 : 기사의 체력이 0보다 작거나 같으면 죽은 것
-	if (vv[idx].k <= 0) 
-		return false;
-
-	if (isValid(idx, dir)) {
-
-		// dir
-		// 명령의 당사자 이동
-
-
-		//if (is_Wall(vv[idx].r + dr[dir], vv[idx].c + dc[dir]))
-		//	return false;
-		candidate.push(idx);
-		//vv[idx].r += dr[dir];
-		//vv[idx].c += dc[dir];
-
-
-		return true;
-	}
-
-	return false;
-
-}
-
-void updateDamage(int idx, int dir) {
-
-	//memset(use, -1, sizeof(use));
-	//for (int i = 0; i < vv[idx].h; i++) {
-	//	for (int j = 0; j < vv[idx].w; j++) {
-	//		use[vv[idx].r + i][vv[idx].c + j] = idx;
-	//	}
-	//}
-	// 기사 기준 해당 방향의 모든 영역 이동 및 데미지 업데이트
-	// 이때 명령의 당사자는 큐에 넣지 않는다.
-	while (!candidate.empty()) {
-		int now = candidate.front();
-		candidate.pop();
-		// 영역 이동
-		int tmp_r = vv[now].r + dr[dir];
-		int tmp_c = vv[now].c + dc[dir];
-
-		for (int i = 0; i < vv[now].h; i++) {
-			for (int j = 0; j < vv[now].w; j++) {
-				if (map[tmp_r + i][tmp_c + j] == 1 && now != idx)
-					vv[now].k -= 1;
-				if (vv[now].k <= 0) 
-					continue;
-				use[vv[now].r + i][vv[now].c + j] = -1;
-				use[tmp_r + i][tmp_c + j] = now;
-
-			}
+	// 이동이 가능한 경우, 실제 위치와 체력을 업데이트합니다.
+	if (TryMovement(idx, dir)) {
+		for (int i = 1; i <= n; i++) {
+			r[i] = nr[i];
+			c[i] = nc[i];
+			k[i] -= dmg[i];
 		}
-
-		vv[now].r = tmp_r;
-		vv[now].c = tmp_c;
-
-	}
-
-
-
-
-}
-
-
-void solution() {
-	// q번 진행
-	for (int cmd = 0; cmd < q; cmd++) {
-		int idx, dir;
-		tie(idx, dir) = qq[cmd];
-
-		// 1. idx번 기사에게 dir방향으로 가라고 명령
-		bool is_shift = shiftKnight(idx, dir);
-
-		memset(chk, 0, sizeof(chk));
-
-		// 2. 만약 이동했다면 데미지 업데이트
-		if (is_shift) {
-			updateDamage(idx, dir);
-			// chk, use 초기화
-		}
-
 	}
 }
 
@@ -244,55 +89,29 @@ int main() {
 
 	// freopen("sample_input.txt", "r", stdin);
 
+	// 입력값을 받습니다.
 	cin >> l >> n >> q;
-	for (int i = 0; i < l; i++) {
-		for (int j = 0; j < l; j++) {
-			cin >> map[i][j];
-		}
+	for (int i = 1; i <= l; i++)
+		for (int j = 1; j <= l; j++)
+			cin >> info[i][j];
+	for (int i = 1; i <= n; i++) {
+		cin >> r[i] >> c[i] >> h[i] >> w[i] >> k[i];
+		bef_k[i] = k[i];
 	}
-
-	vv.resize(n);
-	kk.resize(n);
-
-	memset(use, -1, sizeof(use));
-	for (int i = 0; i < n; i++) {
-		int r, c, h, w, k;
-		cin >> r >> c >> h >> w >> k;
-		// 0번 기사부터 N-1번 기사
-		vv[i] = { r - 1, c - 1, h, w, k };
-		kk[i] = k;
-		for (int a = 0; a < h; a++) {
-			for (int b = 0; b < w; b++) {
-				use[r - 1 + a][c - 1 + b] = i;
-			}
-		}
-
-		
-	}
-
-
-	qq.resize(q);
-	for (int i = 0; i < q; i++) {
+	for (int i = 1; i <= q; i++) {
 		int idx, dir;
 		cin >> idx >> dir;
-		// i번 기사에게 방향 d로 한 칸 이동
-		qq[i] = { idx - 1, dir };
+		MovePiece(idx, dir);
 	}
-	solution();
 
-	// @ 생존한 기사들이 총 받은 대미지의 합
-
-	int rst = 0;
-	for (int i = 0; i < n; i++) {
-		if (vv[i].k > 0) {
-
-			rst += (kk[i] - vv[i].k);
+	// 결과를 계산하고 출력합니다.
+	long long ans = 0;
+	for (int i = 1; i <= n; i++) {
+		if (k[i] > 0) {
+			ans += bef_k[i] - k[i];
 		}
 	}
 
-	cout << rst;
-
-
+	cout << ans;
 	return 0;
-
 }
