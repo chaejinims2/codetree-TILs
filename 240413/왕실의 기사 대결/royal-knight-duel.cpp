@@ -183,9 +183,11 @@ void updateDamage(int dir) {
 		for (int i = 0; i < vv[now].h; i++) {
 			for (int j = 0; j < vv[now].w; j++) {
 				use[i][j] = now;
-				if (map[vv[now].r + i][vv[now].c + j] == 1)
+				if (map[vv[now].r + i][vv[now].c + j] == 1) {
 					// 데미지 업데이트
-					vv[now].k -= 1;
+					vv[now].k -= 1;		
+					memset(use, -1, sizeof(use));
+				}
 			}
 		}
 
@@ -212,7 +214,6 @@ void solution() {
 		if (is_shift) {
 			updateDamage(dir);
 			// chk, use 초기화
-			memset(use, -1, sizeof(use));
 		}
 
 	}
