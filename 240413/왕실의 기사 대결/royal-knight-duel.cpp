@@ -94,10 +94,10 @@ bool isValid(int idx, int dir) {
 
 			for (int i = 0; i < vv[next_idx].h; i++) {
 				for (int j = 0; j < vv[next_idx].w; j++) {
+					if (!is_Wall(vv[next_idx].r + i, vv[next_idx].c + j))
+						continue;
 					if (chk[vv[next_idx].r + i][vv[next_idx].c + j] == 0) {
 
-						if (!is_Wall(vv[next_idx].r + i, vv[next_idx].c + j))
-							continue;
 						switch (dir) {
 						case 0:
 							if (i == 0)
@@ -183,11 +183,9 @@ void updateDamage(int dir) {
 		for (int i = 0; i < vv[now].h; i++) {
 			for (int j = 0; j < vv[now].w; j++) {
 				use[i][j] = now;
-				if (map[vv[now].r + i][vv[now].c + j] == 1) {
+				if (map[vv[now].r + i][vv[now].c + j] == 1)
 					// 데미지 업데이트
-					vv[now].k -= 1;		
-					memset(use, -1, sizeof(use));
-				}
+					vv[now].k -= 1;
 			}
 		}
 
@@ -214,6 +212,7 @@ void solution() {
 		if (is_shift) {
 			updateDamage(dir);
 			// chk, use 초기화
+			memset(use, -1, sizeof(use));
 		}
 
 	}
