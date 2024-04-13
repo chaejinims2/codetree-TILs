@@ -30,6 +30,12 @@ queue<int> candidate;
 const int dr[4] = {-1, 0, 1, 0};
 const int dc[4] = {0, 1, 0, -1};
 
+bool is_Wall(int r, int c) {
+	if (r < 0 || c < 0 || r >= n || c >= n)
+		return false;
+	return true;
+}
+
 // dir = 0, loc[vv[idx].r] 전부
 // dir = 1, loc[vv[idx].r].back() ~ loc[vv[idx].r + vv[idx].w].back()
 // dir = 2, loc[vv[idx].r + vv[idx].w] 전부
@@ -46,6 +52,8 @@ bool isValid(int idx, int dir) {
 
 	for (int i = 0; i < vv[idx].h; i++) {
 		for (int j = 0; j < vv[idx].w; j++) {
+			if (!is_Wall(vv[idx].r + i, vv[idx].c + j))
+				continue;
 			switch (dir) {
 			case 0:
 				if (i == 0)
@@ -88,6 +96,8 @@ bool isValid(int idx, int dir) {
 				for (int j = 0; j < vv[next_idx].w; j++) {
 					if (chk[vv[next_idx].r + i][vv[next_idx].c + j] == 0) {
 
+						if (!is_Wall(vv[next_idx].r + i, vv[next_idx].c + j))
+							continue;
 						switch (dir) {
 						case 0:
 							if (i == 0)
@@ -144,15 +154,14 @@ bool shiftKnight(int idx, int dir) {
 
 		// dir
 		// 명령의 당사자 이동
-		int tmp_next_r = vv[idx].r + dr[dir];
-		int tmp_next_c = vv[idx].c + dc[dir];
 
-		if (tmp_next_r < 0 || tmp_next_c < 0 || tmp_next_r >= n || tmp_next_c >= n) {
+
+		if (!is_Wall(vv[idx].r + dr[dir], vv[idx].c + dc[dir]))
 			return false;
-		}
 
-		vv[idx].r = tmp_next_r;
-		vv[idx].c = tmp_next_c;
+		vv[idx].r += dr[dir];
+		vv[idx].c += dc[dir];
+
 
 		return true;
 	}
@@ -211,7 +220,7 @@ void solution() {
 
 int main() {
 
-	//freopen("sample_input.txt", "r", stdin);
+	// freopen("sample_input.txt", "r", stdin);
 
 	cin >> l >> n >> q;
 	for (int i = 0; i < l; i++) {
@@ -223,7 +232,6 @@ int main() {
 	vv.resize(n);
 	kk.resize(n);
 
-	
 	memset(use, -1, sizeof(use));
 	for (int i = 0; i < n; i++) {
 		int r, c, h, w, k;
